@@ -16,7 +16,7 @@ interface TitleBarProps {
   title?: string
 }
 
-export function TitleBar({ className, title = 'Tauri App' }: TitleBarProps) {
+export function TitleBar({ className, title = 'MCQ Generator' }: TitleBarProps) {
   const {
     leftSidebarVisible,
     rightSidebarVisible,

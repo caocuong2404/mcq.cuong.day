@@ -95,6 +95,7 @@ export default tseslint.config(
       'node_modules/**',
       'src-tauri/target/**',
       'src-tauri/gen/**',
+      'tests/**',
       '*.config.js',
       '*.config.ts',
       'vite.config.ts',
