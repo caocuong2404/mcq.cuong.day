@@ -4,6 +4,7 @@ import { relaunch } from '@tauri-apps/plugin-process'
 import { initializeCommandSystem } from './lib/commands'
 import { logger } from './lib/logger'
 import { cleanupOldFiles } from './lib/recovery'
+import { isTauri } from './lib/tauri'
 import './App.css'
 import MainWindow from './components/layout/MainWindow'
 import { ThemeProvider } from './components/ThemeProvider'
@@ -29,6 +30,8 @@ function App() {
 
     // Auto-updater logic - check for updates 5 seconds after app loads
     const checkForUpdates = async () => {
+      if (!isTauri()) return
+
       try {
         const update = await check()
         if (update) {

@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { logger } from '@/lib/logger'
+import { isTauri } from './tauri'
 
 /**
  * Simple data recovery pattern for saving important data to disk
@@ -37,10 +38,15 @@ export async function saveEmergencyData(
   try {
     logger.debug('Saving emergency data', { filename, dataType: typeof data })
 
-    await invoke('save_emergency_data', {
-      filename,
-      data,
-    })
+    if (isTauri()) {
+      await invoke('save_emergency_data', {
+        filename,
+        data,
+      })
+    } else {
+      // Web fallback: localStorage
+      localStorage.setItem(`recovery:${filename}`, JSON.stringify(data))
+    }
 
     if (!options.silent) {
       logger.info('Emergency data saved successfully', { filename })
@@ -72,9 +78,18 @@ export async function loadEmergencyData<T = unknown>(
   try {
     logger.debug('Loading emergency data', { filename })
 
-    const data = await invoke<T>('load_emergency_data', {
-      filename,
-    })
+    let data: T
+
+    if (isTauri()) {
+      data = await invoke<T>('load_emergency_data', {
+        filename,
+      })
+    } else {
+      // Web fallback: localStorage
+      const item = localStorage.getItem(`recovery:${filename}`)
+      if (!item) throw 'File not found'
+      data = JSON.parse(item) as T
+    }
 
     logger.info('Emergency data loaded successfully', { filename })
     return data
@@ -108,6 +123,11 @@ export async function loadEmergencyData<T = unknown>(
 export async function cleanupOldFiles(): Promise<number> {
   try {
     logger.debug('Starting recovery file cleanup')
+
+    if (!isTauri()) {
+      // Web fallback: No-op for now, or could iterate localStorage
+      return 0
+    }
 
     const removedCount = await invoke<number>('cleanup_old_recovery_files')
 

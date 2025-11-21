@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import type { AppPreferences } from '@/types/preferences'
+import { isTauri } from '@/lib/tauri'
 
 // Query keys for preferences
 export const preferencesQueryKeys = {
@@ -17,9 +18,19 @@ export function usePreferences() {
     queryFn: async (): Promise<AppPreferences> => {
       try {
         logger.debug('Loading preferences from backend')
-        const preferences = await invoke<AppPreferences>('load_preferences')
-        logger.info('Preferences loaded successfully', { preferences })
-        return preferences
+        
+        if (isTauri()) {
+          const preferences = await invoke<AppPreferences>('load_preferences')
+          logger.info('Preferences loaded successfully', { preferences })
+          return preferences
+        } else {
+          // Web fallback
+          const item = localStorage.getItem('preferences')
+          if (!item) throw new Error('No preferences found')
+          const preferences = JSON.parse(item) as AppPreferences
+          logger.info('Preferences loaded from localStorage', { preferences })
+          return preferences
+        }
       } catch (error) {
         // Return defaults if preferences file doesn't exist yet
         logger.warn('Failed to load preferences, using defaults', { error })
@@ -38,7 +49,14 @@ export function useSavePreferences() {
     mutationFn: async (preferences: AppPreferences) => {
       try {
         logger.debug('Saving preferences to backend', { preferences })
-        await invoke('save_preferences', { preferences })
+        
+        if (isTauri()) {
+          await invoke('save_preferences', { preferences })
+        } else {
+          // Web fallback
+          localStorage.setItem('preferences', JSON.stringify(preferences))
+        }
+        
         logger.info('Preferences saved successfully')
       } catch (error) {
         const message =

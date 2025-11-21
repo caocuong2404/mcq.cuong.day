@@ -33,7 +33,7 @@ tauri signer generate -w ~/.tauri/myapp.key
 
 Add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
 
-- `TAURI_PRIVATE_KEY`: Content of `~/.tauri/myapp.key`
+- `TAURI_SIGNING_PRIVATE_KEY`: Content of `~/.tauri/myapp.key`
 - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: Password you set (if any)
 
 ### 3. Update Configuration Files
