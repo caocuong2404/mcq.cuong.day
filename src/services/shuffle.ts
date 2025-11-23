@@ -197,10 +197,16 @@ export function shuffleQuestions(rows: ParsedRow[]): ParsedRow[] {
 
   // Shuffle questions within each section
   sectionsByQuestion.forEach(section => {
-    const lockedIndexes = [0] // Section header is auto-locked
+    const lockedIndexes: number[] = []
 
     section.forEach((questionBlock, index) => {
-      if (index === 0) return // Skip header
+      // Check if first block is a section header
+      if (index === 0 && questionBlock[0]?.type === 'section') {
+        lockedIndexes.push(0)
+        return
+      }
+
+      // Check if question is locked
       if (questionBlock[0]?.locked) {
         lockedIndexes.push(index)
       }
