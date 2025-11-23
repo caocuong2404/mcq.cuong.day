@@ -31,47 +31,64 @@ export function parseMcq(
   const rows: ParsedRow[] = []
   let rowId = 0
 
-  // More flexible question number pattern - matches "1." or "1)" or "1. (0.2 Point)"
-  const questionStartPattern = /^\s*(\d{1,3})[.)]\s*(\([^)]*\))?\s*/gm
+  // Match "1." or "1)" for questions, OR "### Header" for sections
+  const blockStartPattern = /^\s*(?:(\d{1,3})[.)]|(###.*))/gm
 
-  // Split by question numbers
-  const questionBlocks: string[] = []
+  // Split by blocks
+  const blocks: { text: string; type: 'question' | 'section'; match: RegExpExecArray }[] = []
   let match: RegExpExecArray | null
 
-  while ((match = questionStartPattern.exec(normalized)) !== null) {
-    if (questionBlocks.length === 0 && match.index > 0) {
-      // Text before first question = section header
-      questionBlocks.push(normalized.substring(0, match.index))
+  while ((match = blockStartPattern.exec(normalized)) !== null) {
+    if (blocks.length === 0 && match.index > 0) {
+      // Text before first block = implicit first section header
+      const headerText = normalized.substring(0, match.index).trim()
+      if (headerText) {
+        rows.push(createRow(++rowId, 'section', 'S', headerText))
+        rows.push(createRow(++rowId, 'empty', '', ''))
+      }
     }
 
-    const nextMatch = questionStartPattern.exec(normalized)
+    const nextMatch = blockStartPattern.exec(normalized)
+    const end = nextMatch ? nextMatch.index : normalized.length
+    
+    // Reset lastIndex so we find the next match correctly in the next iteration
     if (nextMatch) {
-      questionStartPattern.lastIndex = match.index + match[0].length
-      questionBlocks.push(normalized.substring(match.index, nextMatch.index))
-      questionStartPattern.lastIndex = nextMatch.index
-    } else {
-      questionBlocks.push(normalized.substring(match.index))
-      break
+      blockStartPattern.lastIndex = nextMatch.index
     }
+
+    const blockText = normalized.substring(match.index, end)
+    const isSection = !!match[2] // Group 2 is the ### section
+    
+    blocks.push({
+      text: blockText,
+      type: isSection ? 'section' : 'question',
+      match
+    })
+    
+    if (!nextMatch) break
   }
 
-  // If no questions found, treat entire input as section
-  if (questionBlocks.length === 0) {
-    rows.push(createRow(++rowId, 'section', 'S', normalized))
-    rows.push(createRow(++rowId, 'empty', '', ''))
+  // If no blocks found, treat entire input as section
+  if (blocks.length === 0) {
+    // Check if there's any text at all
+    if (normalized.trim()) {
+      rows.push(createRow(++rowId, 'section', 'S', normalized))
+      rows.push(createRow(++rowId, 'empty', '', ''))
+    }
     return rows
   }
 
-  // Process each block
-  questionBlocks.forEach((block, blockIndex) => {
-    if (!block.trim()) return
-
-    // Check if this is a question block
-    const questionMatch = block.match(/^\s*(\d{1,3})[.)]\s*(\([^)]*\))?\s*/)
-
-    if (questionMatch) {
+  // Process blocks
+  blocks.forEach(block => {
+    if (block.type === 'section') {
+      // Strip the ### prefix
+      const sectionTitle = block.match[2]?.replace(/^###\s*/, '').trim() || ''
+      rows.push(createRow(++rowId, 'section', 'S', sectionTitle))
+      rows.push(createRow(++rowId, 'empty', '', ''))
+    } else {
+      // Question block
       try {
-        const questionRows = parseQuestionBlockFlexible(block, rowId)
+        const questionRows = parseQuestionBlockFlexible(block.text, rowId)
         questionRows.forEach(row => {
           rowId++
           row.id = rowId
@@ -79,13 +96,7 @@ export function parseMcq(
         })
         rows.push(createRow(++rowId, 'empty', '', ''))
       } catch {
-        rows.push(createRow(++rowId, 'error', 'error', block))
-        rows.push(createRow(++rowId, 'empty', '', ''))
-      }
-    } else {
-      // Section header
-      if (blockIndex === 0) {
-        rows.push(createRow(++rowId, 'section', 'S', block.trim()))
+        rows.push(createRow(++rowId, 'error', 'error', block.text))
         rows.push(createRow(++rowId, 'empty', '', ''))
       }
     }
