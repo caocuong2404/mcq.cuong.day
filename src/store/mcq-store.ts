@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { ExamConfig, FormatSettings, ParsedRow } from '../types/mcq'
 
 interface McqState {
@@ -45,10 +46,10 @@ interface McqState {
 const initialState = {
   parsedRows: [],
   formatSettings: {
-    questionPrefix: ['(', ''],
-    questionPostfix: [')', '). '],
-    answerPrefix: ['(', ''],
-    answerPostfix: [')', '). '],
+    questionPrefix: ['', ''],
+    questionPostfix: ['. ', '). '],
+    answerPrefix: ['', ''],
+    answerPostfix: ['. ', '). '],
     answerLowercase: false,
     correctPrefix: ['*'],
   } as FormatSettings,
@@ -58,10 +59,10 @@ const initialState = {
     shuffleAnswers: false,
     startNumber: 1,
     format: {
-      questionPrefix: ['(', ''],
-      questionPostfix: [')', '). '],
-      answerPrefix: ['(', ''],
-      answerPostfix: [')', '). '],
+      questionPrefix: ['', ''],
+      questionPostfix: ['. ', '). '],
+      answerPrefix: ['', ''],
+      answerPostfix: ['. ', '). '],
       answerLowercase: false,
     },
   } as ExamConfig,
@@ -90,30 +91,51 @@ const initialState = {
  * }, [parsedRows, setParsedRows]) // Re-creates constantly
  * ```
  */
-export const useMcqStore = create<McqState>(set => ({
-  ...initialState,
+export const useMcqStore = create<McqState>()(
+  persist(
+    set => ({
+      ...initialState,
 
-  setParsedRows: rows => set({ parsedRows: rows }),
+      setParsedRows: rows => set({ parsedRows: rows }),
 
-  setFormatSettings: settings =>
-    set(state => ({
-      formatSettings: { ...state.formatSettings, ...settings },
-    })),
+      setFormatSettings: settings =>
+        set(state => {
+          const newSettings = { ...state.formatSettings, ...settings }
+          // Also update examConfig.format to keep them in sync
+          return {
+            formatSettings: newSettings,
+            examConfig: {
+              ...state.examConfig,
+              format: newSettings,
+            },
+          }
+        }),
 
-  setExamConfig: config =>
-    set(state => ({
-      examConfig: { ...state.examConfig, ...config },
-    })),
+      setExamConfig: config =>
+        set(state => ({
+          examConfig: { ...state.examConfig, ...config },
+        })),
 
-  setExamOutput: output => set({ examOutput: output }),
+      setExamOutput: output => set({ examOutput: output }),
 
-  setAnswerKey: key => set({ answerKey: key }),
+      setAnswerKey: key => set({ answerKey: key }),
 
-  setImportInput: input => set({ importInput: input }),
+      setImportInput: input => set({ importInput: input }),
 
-  setImportAnswerKeyInput: input => set({ importAnswerKeyInput: input }),
+      setImportAnswerKeyInput: input => set({ importAnswerKeyInput: input }),
 
-  setCurrentView: view => set({ currentView: view }),
+      setCurrentView: view => set({ currentView: view }),
 
-  resetAll: () => set(initialState),
-}))
+      resetAll: () => set(initialState),
+    }),
+    {
+      name: 'mcq-storage',
+      partialize: state => ({
+        formatSettings: state.formatSettings,
+        examConfig: state.examConfig,
+        importInput: state.importInput,
+        importAnswerKeyInput: state.importAnswerKeyInput,
+      }),
+    }
+  )
+)

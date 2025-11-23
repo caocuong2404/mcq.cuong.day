@@ -22,16 +22,16 @@ export function generateExamOutput(
     if (row.type === 'section') {
       output += `\n${row.text}\n\n`
     } else if (row.type === 'question') {
-      const prefix = config.format.questionPrefix[0] || ''
-      const postfix = config.format.questionPostfix[0] || ') '
+      const prefix = config.format.questionPrefix[0] ?? ''
+      const postfix = config.format.questionPostfix[0] ?? ') '
       output += `${prefix}${currentQuestionNum}${postfix}${row.text}\n`
       currentQuestionNum++
     } else if (row.type === 'answer') {
       const letter = config.format.answerLowercase
         ? row.label.toLowerCase()
         : row.label
-      const prefix = config.format.answerPrefix[0] || ''
-      const postfix = config.format.answerPostfix[0] || ') '
+      const prefix = config.format.answerPrefix[0] ?? ''
+      const postfix = config.format.answerPostfix[0] ?? ') '
       output += `   ${prefix}${letter}${postfix}${row.text}\n`
     } else if (row.type === 'empty') {
       output += '\n'

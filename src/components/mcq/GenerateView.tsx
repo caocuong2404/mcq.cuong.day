@@ -26,14 +26,17 @@ export function GenerateView() {
 
   const [shuffledRows, setShuffledRows] = useState(parsedRows)
   const [previewOutput, setPreviewOutput] = useState('')
+  const [previewHtml, setPreviewHtml] = useState('')
   const [previewKey, setPreviewKey] = useState<string[]>([])
 
   // Update preview when rows or config changes
   useEffect(() => {
     if (shuffledRows.length > 0) {
       const output = generateExamOutput(shuffledRows, examConfig)
+      const html = generateExamHtml(shuffledRows, examConfig)
       const key = generateAnswerKey(shuffledRows, examConfig.startNumber)
       setPreviewOutput(output)
+      setPreviewHtml(html)
       setPreviewKey(key)
     }
   }, [shuffledRows, examConfig])
@@ -63,12 +66,24 @@ export function GenerateView() {
 
   const handleCopyExam = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(previewOutput)
-      toast.success('Exam copied to clipboard')
-    } catch {
+      const htmlOutput = generateExamHtml(shuffledRows, examConfig)
+      const textOutput = previewOutput
+
+      const textBlob = new Blob([textOutput], { type: 'text/plain' })
+      const htmlBlob = new Blob([htmlOutput], { type: 'text/html' })
+
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/plain': textBlob,
+          'text/html': htmlBlob,
+        }),
+      ])
+      toast.success('Exam copied to clipboard with formatting')
+    } catch (err) {
+      console.error(err)
       toast.error('Failed to copy to clipboard')
     }
-  }, [previewOutput])
+  }, [previewOutput, shuffledRows, examConfig])
 
   const handleCopyAnswerKey = useCallback(async () => {
     try {
@@ -214,9 +229,10 @@ export function GenerateView() {
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-4 overflow-hidden min-h-0">
             <ScrollArea className="flex-1 rounded-md border p-4 overflow-y-auto">
-              <pre className="whitespace-pre-wrap font-mono text-sm">
-                {previewOutput}
-              </pre>
+              <div
+                className="font-mono text-sm"
+                dangerouslySetInnerHTML={{ __html: previewHtml }}
+              />
             </ScrollArea>
 
             {previewKey.length > 0 && (
@@ -243,4 +259,32 @@ export function GenerateView() {
       </div>
     </div>
   )
+}
+
+function generateExamHtml(rows: any[], config: any): string {
+  let output = ''
+  let currentQuestionNum = config.startNumber
+
+  for (const row of rows) {
+    if (row.type === 'section') {
+      output += `<b>${row.text}</b><br><br>`
+    } else if (row.type === 'question') {
+      const prefix = config.format.questionPrefix[0] ?? ''
+      const postfix = config.format.questionPostfix[0] ?? ') '
+      output += `<b>${prefix}${currentQuestionNum}${postfix}${row.text}</b><br>`
+      currentQuestionNum++
+    } else if (row.type === 'answer') {
+      const letter = config.format.answerLowercase
+        ? row.label.toLowerCase()
+        : row.label
+      const prefix = config.format.answerPrefix[0] ?? ''
+      const postfix = config.format.answerPostfix[0] ?? ') '
+      // Use non-breaking spaces for indentation
+      output += `&nbsp;&nbsp;&nbsp;${prefix}${letter}${postfix}${row.text}<br>`
+    } else if (row.type === 'empty') {
+      output += '<br>'
+    }
+  }
+
+  return output
 }

@@ -17,8 +17,10 @@ import { useMcqStore } from '@/store/mcq-store'
 import { toast } from 'sonner'
 
 export function SettingsView() {
-  const { formatSettings, setFormatSettings, examConfig, setExamConfig } =
-    useMcqStore.getState()
+  const formatSettings = useMcqStore(state => state.formatSettings)
+  const setFormatSettings = useMcqStore(state => state.setFormatSettings)
+  const examConfig = useMcqStore(state => state.examConfig)
+  const setExamConfig = useMcqStore(state => state.setExamConfig)
 
   const handleReset = () => {
     setFormatSettings({
