@@ -75,6 +75,10 @@ export interface ExamConfig {
   startNumber: number
   /** Format settings for output */
   format: FormatSettings
+  /** Number of questions per column in answer sheet */
+  questionsPerColumn: number
+  /** Whether to show column headers in answer sheet */
+  showColumnHeaders: boolean
 }
 
 /**
@@ -151,4 +155,6 @@ export const DEFAULT_EXAM_CONFIG: ExamConfig = {
   shuffleAnswers: false,
   startNumber: 1,
   format: DEFAULT_FORMAT_SETTINGS,
+  questionsPerColumn: 5,
+  showColumnHeaders: true,
 }

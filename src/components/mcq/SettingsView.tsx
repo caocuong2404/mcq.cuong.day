@@ -54,7 +54,7 @@ export function SettingsView() {
         </Button>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-6 overflow-auto">
         <Card>
           <CardHeader>
             <CardTitle>Question Format</CardTitle>
@@ -219,6 +219,46 @@ export function SettingsView() {
                   }
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Answer Sheet Layout</CardTitle>
+            <CardDescription>
+              Configure the answer sheet table layout
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="space-y-2">
+              <Label>Questions Per Column</Label>
+              <Input
+                type="number"
+                min={1}
+                value={examConfig.questionsPerColumn}
+                onChange={e =>
+                  setExamConfig({ questionsPerColumn: parseInt(e.target.value) || 5 })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Number of questions displayed in each column of the answer sheet (8-column layout)
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Show Column Headers</Label>
+                <p className="text-sm text-muted-foreground">
+                  Display &quot;Q#&quot; and &quot;Answers&quot; headers in the answer sheet table
+                </p>
+              </div>
+              <Switch
+                checked={examConfig.showColumnHeaders}
+                onCheckedChange={checked =>
+                  setExamConfig({ showColumnHeaders: checked })
+                }
+              />
             </div>
           </CardContent>
         </Card>

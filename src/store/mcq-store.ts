@@ -58,6 +58,8 @@ const initialState = {
     shuffleQuestions: false,
     shuffleAnswers: false,
     startNumber: 1,
+    questionsPerColumn: 5,
+    showColumnHeaders: true,
     format: {
       questionPrefix: ['', ''],
       questionPostfix: ['. ', '). '],

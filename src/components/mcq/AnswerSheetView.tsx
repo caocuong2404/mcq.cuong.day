@@ -12,21 +12,22 @@ import { toast } from 'sonner'
 
 interface AnswerSheetProps {
   questions: { number: number; correctAnswers: string[] }[]
-  columns?: number
   maxAnswers?: number
+  questionsPerColumn: number
+  showColumnHeaders: boolean
 }
 
 const AnswerSheetBubbles = React.forwardRef<HTMLDivElement, AnswerSheetProps>(
-  ({ questions, columns = 4, maxAnswers = 5 }, ref) => {
-    const questionsByColumn = []
-    const questionsPerColumn = Math.ceil(questions.length / columns)
+  ({ questions, maxAnswers = 5, questionsPerColumn, showColumnHeaders }, ref) => {
     const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].slice(0, maxAnswers)
+    const numColumnPairs = 4 // Fixed: 4 pairs = 8 visual columns
 
-    // Split questions into columns
-    for (let i = 0; i < columns; i++) {
+    // Split questions into 4 groups
+    const questionGroups: typeof questions[] = []
+    for (let i = 0; i < numColumnPairs; i++) {
       const start = i * questionsPerColumn
       const end = start + questionsPerColumn
-      questionsByColumn.push(questions.slice(start, end))
+      questionGroups.push(questions.slice(start, end))
     }
 
     return (
@@ -39,7 +40,7 @@ const AnswerSheetBubbles = React.forwardRef<HTMLDivElement, AnswerSheetProps>(
           </p>
         </div>
 
-        {/* Capture Target - Only the questions grid */}
+        {/* Capture Target - Only the table */}
         <div
           ref={ref}
           id="answer-sheet-grid"
@@ -51,76 +52,125 @@ const AnswerSheetBubbles = React.forwardRef<HTMLDivElement, AnswerSheetProps>(
             boxSizing: 'border-box',
           }}
         >
-          <div
+          <table
             style={{
-              display: 'grid',
-              gap: '1.5rem',
-              gridTemplateColumns: `repeat(${columns}, 1fr)`,
+              width: '100%',
+              borderCollapse: 'collapse',
+              border: '1px solid #000',
             }}
           >
-            {questionsByColumn.map((columnQuestions, columnIdx) => (
-              <div
-                key={columnIdx}
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
-              >
-                {columnQuestions.map(question => (
-                  <div
-                    key={question.number}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '1.5rem',
-                        textAlign: 'right',
-                        fontWeight: 500,
-                        color: '#000000',
-                      }}
-                    >
-                      {question.number}.
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      {letters.map(letter => {
-                        const isCorrect = question.correctAnswers.includes(letter)
-                        return (
+            {/* Optional Header Row */}
+            {showColumnHeaders && (
+              <thead>
+                <tr>
+                  {Array.from({ length: numColumnPairs }).map((_, i) => (
+                    <React.Fragment key={i}>
+                      <th
+                        style={{
+                          border: '1px solid #000',
+                          padding: '0.5rem',
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Q#
+                      </th>
+                      <th
+                        style={{
+                          border: '1px solid #000',
+                          padding: '0.5rem',
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                        }}
+                      >
+                        Answers
+                      </th>
+                    </React.Fragment>
+                  ))}
+                </tr>
+              </thead>
+            )}
+
+            <tbody>
+              {/* Rows calculated from questionsPerColumn */}
+              {Array.from({ length: questionsPerColumn }).map((_, rowIdx) => (
+                <tr key={rowIdx}>
+                  {/* 4 column pairs */}
+                  {questionGroups.map((group, groupIdx) => {
+                    const question = group[rowIdx]
+                    if (!question) {
+                      return (
+                        <React.Fragment key={groupIdx}>
+                          <td style={{ border: '1px solid #000' }}></td>
+                          <td style={{ border: '1px solid #000' }}></td>
+                        </React.Fragment>
+                      )
+                    }
+
+                    return (
+                      <React.Fragment key={groupIdx}>
+                        {/* Question number cell - NO DOT */}
+                        <td
+                          style={{
+                            border: '1px solid #000',
+                            padding: '0.5rem',
+                            textAlign: 'center',
+                            fontWeight: 500,
+                            color: '#000000',
+                          }}
+                        >
+                          {question.number}
+                        </td>
+
+                        {/* Answer bubbles cell */}
+                        <td
+                          style={{
+                            border: '1px solid #000',
+                            padding: '0.5rem',
+                          }}
+                        >
                           <div
-                            key={letter}
-                            style={{ display: 'flex', alignItems: 'center' }}
+                            style={{
+                              display: 'flex',
+                              gap: '0.25rem',
+                              justifyContent: 'space-evenly',
+                            }}
                           >
-                            <svg width="20" height="20" viewBox="0 0 24 24">
-                              <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                                fill={isCorrect ? '#000000' : '#ffffff'}
-                                stroke="#000000"
-                                strokeWidth="1.5"
-                              />
-                              <text
-                                x="12"
-                                y="16"
-                                textAnchor="middle"
-                                fontSize="12"
-                                fontWeight="bold"
-                                fill={isCorrect ? '#ffffff' : '#000000'}
-                                style={{ fontFamily: 'sans-serif' }}
-                              >
-                                {letter}
-                              </text>
-                            </svg>
+                            {letters.map(letter => {
+                              const isCorrect = question.correctAnswers.includes(letter)
+                              return (
+                                <svg key={letter} width="20" height="20" viewBox="0 0 24 24">
+                                  <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="9"
+                                    fill={isCorrect ? '#000000' : '#ffffff'}
+                                    stroke="#000000"
+                                    strokeWidth="1.5"
+                                  />
+                                  <text
+                                    x="12"
+                                    y="16"
+                                    textAnchor="middle"
+                                    fontSize="12"
+                                    fontWeight="bold"
+                                    fill={isCorrect ? '#ffffff' : '#000000'}
+                                    style={{ fontFamily: 'sans-serif' }}
+                                  >
+                                    {letter}
+                                  </text>
+                                </svg>
+                              )
+                            })}
                           </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
+                        </td>
+                      </React.Fragment>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {/* Footer - Visible in UI, NOT captured */}
@@ -186,7 +236,7 @@ export function AnswerSheetView() {
 
     try {
       const { toPng } = await import('html-to-image')
-      
+
       // Generate blob directly
       const dataUrl = await toPng(sheetRef.current, {
         backgroundColor: '#ffffff',
@@ -243,7 +293,7 @@ export function AnswerSheetView() {
 
     try {
       const { toBlob } = await import('html-to-image')
-      
+
       const blob = await toBlob(sheetRef.current, {
         backgroundColor: '#ffffff',
         pixelRatio: 2,
@@ -320,8 +370,9 @@ export function AnswerSheetView() {
         <CardContent className="p-6">
           <AnswerSheetBubbles
             questions={questions}
-            columns={4}
             maxAnswers={maxAnswers}
+            questionsPerColumn={examConfig.questionsPerColumn}
+            showColumnHeaders={examConfig.showColumnHeaders}
             ref={sheetRef}
           />
         </CardContent>
