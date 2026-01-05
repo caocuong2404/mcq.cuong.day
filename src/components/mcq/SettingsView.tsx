@@ -246,6 +246,22 @@ export function SettingsView() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label>Bubble Size (px)</Label>
+              <Input
+                type="number"
+                min={16}
+                max={40}
+                value={examConfig.bubbleSize}
+                onChange={e =>
+                  setExamConfig({ bubbleSize: parseInt(e.target.value) || 24 })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Size of answer bubble circles in pixels (recommended: 20-28)
+              </p>
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <Label>Show Column Headers</Label>
@@ -284,6 +300,6 @@ export function SettingsView() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div >
   )
 }

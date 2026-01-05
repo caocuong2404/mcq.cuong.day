@@ -79,6 +79,8 @@ export interface ExamConfig {
   questionsPerColumn: number
   /** Whether to show column headers in answer sheet */
   showColumnHeaders: boolean
+  /** Size of answer bubbles in pixels */
+  bubbleSize: number
 }
 
 /**
@@ -157,4 +159,5 @@ export const DEFAULT_EXAM_CONFIG: ExamConfig = {
   format: DEFAULT_FORMAT_SETTINGS,
   questionsPerColumn: 5,
   showColumnHeaders: true,
+  bubbleSize: 24,
 }

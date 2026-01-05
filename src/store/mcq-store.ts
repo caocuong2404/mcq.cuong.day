@@ -60,6 +60,7 @@ const initialState = {
     startNumber: 1,
     questionsPerColumn: 5,
     showColumnHeaders: true,
+    bubbleSize: 24,
     format: {
       questionPrefix: ['', ''],
       questionPostfix: ['. ', '). '],

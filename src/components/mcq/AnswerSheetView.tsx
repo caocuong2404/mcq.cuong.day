@@ -15,10 +15,11 @@ interface AnswerSheetProps {
   maxAnswers?: number
   questionsPerColumn: number
   showColumnHeaders: boolean
+  bubbleSize: number
 }
 
 const AnswerSheetBubbles = React.forwardRef<HTMLDivElement, AnswerSheetProps>(
-  ({ questions, maxAnswers = 5, questionsPerColumn, showColumnHeaders }, ref) => {
+  ({ questions, maxAnswers = 5, questionsPerColumn, showColumnHeaders, bubbleSize }, ref) => {
     const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].slice(0, maxAnswers)
     const numColumnPairs = 4 // Fixed: 4 pairs = 8 visual columns
 
@@ -132,14 +133,14 @@ const AnswerSheetBubbles = React.forwardRef<HTMLDivElement, AnswerSheetProps>(
                           <div
                             style={{
                               display: 'flex',
-                              gap: '0.25rem',
-                              justifyContent: 'space-evenly',
+                              gap: '0.4rem',
+                              justifyContent: 'center',
                             }}
                           >
                             {letters.map(letter => {
                               const isCorrect = question.correctAnswers.includes(letter)
                               return (
-                                <svg key={letter} width="20" height="20" viewBox="0 0 24 24">
+                                <svg key={letter} width={bubbleSize} height={bubbleSize} viewBox="0 0 24 24">
                                   <circle
                                     cx="12"
                                     cy="12"
@@ -373,6 +374,7 @@ export function AnswerSheetView() {
             maxAnswers={maxAnswers}
             questionsPerColumn={examConfig.questionsPerColumn}
             showColumnHeaders={examConfig.showColumnHeaders}
+            bubbleSize={examConfig.bubbleSize}
             ref={sheetRef}
           />
         </CardContent>
