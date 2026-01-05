@@ -95,13 +95,16 @@ export function GenerateView() {
   }, [previewKey])
 
   const handleGenerateAnswerSheet = useCallback(() => {
-    const { setExamOutput, setAnswerKey, setCurrentView } =
+    const { setExamOutput, setAnswerKey, setParsedRows, setCurrentView } =
       useMcqStore.getState()
+
+    // Update parsedRows with shuffled data so AnswerSheetView reflects the correct order
+    setParsedRows(shuffledRows)
     setExamOutput(previewOutput)
     setAnswerKey(previewKey)
     setCurrentView('answer-sheet')
     toast.success('Ready to generate answer sheet')
-  }, [previewOutput, previewKey])
+  }, [previewOutput, previewKey, shuffledRows])
 
   if (parsedRows.length === 0) {
     return (
